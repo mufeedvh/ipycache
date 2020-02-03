@@ -113,6 +113,21 @@ def load_vars(path, vars):
     
     """
     with open(path, 'rb') as f:
+        # to prevent remote code execution attacks from malicious pickle files
+        
+        # blacklist of malicious pickle file payloads:
+        # - 'cposix'       = os module
+        # - 'csubprocess'  = subprocess module
+        # - 'c__builtin__' = eval function
+        blacklist = ['cposix', 'csubprocess', 'c__builtin__']
+
+        # reading every line in the pickle file to check for malicious payloads
+        for line in f:
+            for x in range(len(blacklist)):
+                if blacklist[x] in line:
+                    # quitting the program with a warning message to avoid the execution of the malicious pickle file
+                    quit("\nWARNING: The given pickle file is malicious and could lead to a Remote Code Execute attack.\n")
+        
         # Load the variables from the cache.
         try:
             cache = pickle.load(f)
